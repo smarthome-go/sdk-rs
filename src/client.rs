@@ -1,24 +1,53 @@
+use semver::{Version, VersionReq};
+use serde::Deserialize;
+
+use crate::{
+    errors::{Error, Result, SmarthomeError},
+    Auth, HTTP_USER_AGENT, SERVER_VERSION_REQUIREMENT, version::{VersionResponse, check_version},
+};
+
 pub struct Client {
-    auth: Auth,
-    smarthome_url: url::Url,
-    smarthome_version: String,
+    pub client: reqwest::Client,
+    pub auth: Auth,
+    pub smarthome_url: url::Url,
+    pub smarthome_version: VersionResponse,
 }
 
-pub enum Auth {
-    None,
-    QueryPassword(User),
-    SessionPassword(User),
-    QueryToken(Token),
-    SessionToken(Token),
-}
+impl Client {
+    pub async fn new(raw_url: &str, auth: Auth) -> Result<Self> {
+        // Default client with user agent is created
+        let client = reqwest::Client::builder()
+            .user_agent(HTTP_USER_AGENT)
+            .build()?;
 
-struct Token {
-    token: String,
-    client_name: String,
-}
+        let smarthome_url = reqwest::Url::parse(&raw_url)?;
 
-struct User{
-    username: String,
-    password: String
-}
+        // Fetch the version from the Smarthome server
+        let mut version_url = smarthome_url.clone();
+        version_url.set_path("/api/version");
+        let res = reqwest::get(version_url).await?;
 
+        // Handle errors which could occur during fetching
+        if res.status() != reqwest::StatusCode::OK {
+            return Err(Error::Smarthome(SmarthomeError::Other(res.status())));
+        }
+        let version = res.json::<VersionResponse>().await?;
+
+        // Check if the SDK's version is compatible with the server's version
+        match check_version(&version.version) {
+            Ok(true) => Ok(Self {
+                client,
+                auth,
+                smarthome_url,
+                smarthome_version: version,
+            }),
+            Ok(false) => Err(Error::IncompatibleVersion(version.version)),
+            Err(err) => Err(err),
+        }
+        //url.query_pairs_mut().clear().append_pair("token", token);
+    }
+
+    pub fn smarthome_version(&self) -> &VersionResponse {
+        &self.smarthome_version
+    }
+}
