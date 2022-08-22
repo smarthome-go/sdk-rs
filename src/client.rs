@@ -17,7 +17,7 @@ pub struct Client {
 impl Client {
     pub async fn new(raw_url: &str, auth: Auth) -> Result<Self> {
         // Parse the source url
-        let smarthome_url = reqwest::Url::parse(&raw_url)?;
+        let smarthome_url = reqwest::Url::parse(raw_url)?;
         // Default client with user agent is created
         let client = reqwest::Client::builder()
             .user_agent(HTTP_USER_AGENT)
@@ -49,7 +49,7 @@ impl Client {
         // Attempt to login using the specified credentials
         match &client.auth {
             Auth::None => Ok(client),
-            auth => match validate_credentials(&client.smarthome_url, &auth).await {
+            auth => match validate_credentials(&client.smarthome_url, auth).await {
                 Ok(_) => Ok(client),
                 Err(err) => Err(err),
             },
