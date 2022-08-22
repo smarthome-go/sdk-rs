@@ -3,7 +3,9 @@ mod auth;
 mod version;
 mod errors;
 
-pub use auth::Auth;
+mod homescript;
+
+pub use auth::{Auth, User};
 pub use client::Client;
 
 const SERVER_VERSION_REQUIREMENT: &str = "^0.2.0";
