@@ -26,4 +26,3 @@ impl From<semver::Error> for Error {
         Self::VersionParse(err)
     }
 }
-

@@ -1,4 +1,4 @@
-use crate::{errors::Result, SERVER_VERSION_REQUIREMENT, Client};
+use crate::{errors::Result, Client, SERVER_VERSION_REQUIREMENT};
 use semver::{Version, VersionReq};
 use serde::Deserialize;
 
