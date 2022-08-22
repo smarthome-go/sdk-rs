@@ -2,7 +2,7 @@ use reqwest::{Request, Response};
 use serde::Serialize;
 
 use crate::errors::Result;
-use crate::Auth::{QueryPassword, QueryToken, SessionPassword, SessionToken};
+use crate::Auth::{QueryPassword, QueryToken};
 use crate::Client;
 
 impl Client {
@@ -28,7 +28,7 @@ impl Client {
         let mut request = self.client.request(method, url);
         // Depending on the authentication mode, choose a query-type
         match &self.auth {
-            crate::Auth::None | SessionPassword(_) | SessionToken(_) => (),
+            crate::Auth::None => (),
             QueryPassword(user) => {
                 request =
                     request.query(&[("username", &user.username), ("password", &user.password)])
