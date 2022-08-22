@@ -1,9 +1,7 @@
-use semver::{Version, VersionReq};
-use serde::Deserialize;
-
 use crate::{
-    errors::{Error, Result, SmarthomeError},
-    Auth, HTTP_USER_AGENT, SERVER_VERSION_REQUIREMENT, version::{VersionResponse, check_version},
+    errors::{Error, Result},
+    version::{check_version, VersionResponse},
+    Auth, HTTP_USER_AGENT,
 };
 
 pub struct Client {
@@ -29,7 +27,7 @@ impl Client {
 
         // Handle errors which could occur during fetching
         if res.status() != reqwest::StatusCode::OK {
-            return Err(Error::Smarthome(SmarthomeError::Other(res.status())));
+            return Err(Error::Smarthome(res.status()));
         }
         let version = res.json::<VersionResponse>().await?;
 
@@ -44,10 +42,5 @@ impl Client {
             Ok(false) => Err(Error::IncompatibleVersion(version.version)),
             Err(err) => Err(err),
         }
-        //url.query_pairs_mut().clear().append_pair("token", token);
-    }
-
-    pub fn smarthome_version(&self) -> &VersionResponse {
-        &self.smarthome_version
     }
 }

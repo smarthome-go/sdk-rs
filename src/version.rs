@@ -1,4 +1,4 @@
-use crate::{errors::Result, SERVER_VERSION_REQUIREMENT};
+use crate::{errors::Result, SERVER_VERSION_REQUIREMENT, Client};
 use semver::{Version, VersionReq};
 use serde::Deserialize;
 
@@ -14,4 +14,10 @@ pub fn check_version(server_version: &str) -> Result<bool> {
     let version = Version::parse(server_version)?;
 
     Ok(req.matches(&version))
+}
+
+impl Client {
+    pub fn smarthome_version(&self) -> &VersionResponse {
+        &self.smarthome_version
+    }
 }

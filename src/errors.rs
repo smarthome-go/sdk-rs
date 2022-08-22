@@ -4,17 +4,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     UrlParse(url::ParseError),
     Reqwest(reqwest::Error),
-    Smarthome(SmarthomeError),
+    Smarthome(reqwest::StatusCode),
     VersionParse(semver::Error),
     IncompatibleVersion(String),
-}
-
-#[derive(Debug)]
-pub enum SmarthomeError {
-    InvalidCredentials,
-    ServiceUnavailable,
-    UnprocessableEntity,
-    Other(reqwest::StatusCode),
 }
 
 impl From<reqwest::Error> for Error {
