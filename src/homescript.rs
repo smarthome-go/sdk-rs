@@ -1,23 +1,3 @@
-use serde::Deserialize;
-
-#[derive(Deserialize)]
-pub struct Homescript {
-    pub owner: String,
-    pub data: HomescriptData,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct HomescriptData {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub quick_actions_enabled: bool,
-    pub scheduler_enabled: bool,
-    pub code: String,
-    pub md_icon: String,
-}
-
 pub mod exec {
     use std::fmt::Display;
 
@@ -69,7 +49,11 @@ pub mod exec {
             write!(
                 f,
                 "{} at {}:{}:{}\n  {}",
-                self.error_type, self.location.filename, self.location.line, self.location.column, self.message,
+                self.error_type,
+                self.location.filename,
+                self.location.line,
+                self.location.column,
+                self.message,
             )
         }
     }
