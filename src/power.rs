@@ -13,18 +13,18 @@ struct PowerRequest {
 
 #[derive(Deserialize, Debug)]
 pub struct PowerDrawPoint {
-     pub id: u64,
-     pub time: u64,
-     pub on: PowerDrawData,
-     pub off: PowerDrawData,
+    pub id: u64,
+    pub time: u64,
+    pub on: PowerDrawData,
+    pub off: PowerDrawData,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct PowerDrawData {
     #[serde(rename = "switchCount")]
-     pub switch_count: usize,
-     pub watts: usize,
-     pub percent: f64,
+    pub switch_count: usize,
+    pub watts: usize,
+    pub percent: f64,
 }
 
 impl Client {
