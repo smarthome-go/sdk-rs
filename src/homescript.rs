@@ -84,17 +84,50 @@ pub mod exec {
     }
 
     impl Client {
-        pub async fn run_homescript_code(
+        /// Executes Homescript code on the target server and returns the response
+        pub async fn exec_homescript_code(
             &self,
             code: String,
             args: Vec<HomescriptArg>,
+            lint: bool,
         ) -> Result<HomescriptExecResponse> {
             let result = self
                 .client
                 .execute(self.build_request::<ExecHomescriptCodeRequest>(
                     reqwest::Method::POST,
-                    "/api/homescript/run/live",
+                    if lint {
+                        "/api/homescript/lint/live"
+                    } else {
+                        "/api/homescript/run/live"
+                    },
                     Some(ExecHomescriptCodeRequest { code, args }),
+                )?)
+                .await?;
+            match result.status() {
+                reqwest::StatusCode::OK | reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
+                    Ok(result.json::<HomescriptExecResponse>().await?)
+                }
+                status => Err(Error::Smarthome(status)),
+            }
+        }
+
+        /// Executes a Homescript by-id on the target server
+        pub async fn exec_homescript(
+            &self,
+            id: String,
+            args: Vec<HomescriptArg>,
+            lint: bool,
+        ) -> Result<HomescriptExecResponse> {
+            let result = self
+                .client
+                .execute(self.build_request::<ExecHomescriptbyIdRequest>(
+                    reqwest::Method::POST,
+                    if lint {
+                        "/api/homescript/lint"
+                    } else {
+                        "/api/homescript/run"
+                    },
+                    Some(ExecHomescriptbyIdRequest { id, args }),
                 )?)
                 .await?;
             match result.status() {
