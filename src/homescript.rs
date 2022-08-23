@@ -19,6 +19,8 @@ pub struct HomescriptData {
 }
 
 pub mod exec {
+    use std::fmt::Display;
+
     use serde::{Deserialize, Serialize};
 
     use crate::errors::{Error, Result};
@@ -60,6 +62,16 @@ pub mod exec {
         pub error_type: String,
         pub location: HomescriptExecErrorLocation,
         pub message: String,
+    }
+
+    impl Display for HomescriptExecError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "{} at {}:{}:{}\n  {}",
+                self.error_type, self.location.filename, self.location.line, self.location.column, self.message,
+            )
+        }
     }
 
     #[derive(Deserialize, Debug)]
