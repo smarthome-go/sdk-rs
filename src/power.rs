@@ -6,8 +6,8 @@ use crate::Client;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct PowerRequest {
-    switch: String,
+struct PowerRequest<'request> {
+    switch: &'request str,
     power_on: bool,
 }
 
@@ -28,7 +28,7 @@ pub struct PowerDrawData {
 }
 
 impl Client {
-    pub async fn set_power(&self, switch: String, power_on: bool) -> Result<()> {
+    pub async fn set_power(&self, switch: &str, power_on: bool) -> Result<()> {
         let response = self
             .client
             .execute(self.build_request::<PowerRequest>(
