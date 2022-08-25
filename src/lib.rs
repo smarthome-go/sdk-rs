@@ -11,7 +11,7 @@ mod power;
 pub use auth::{Auth, User};
 pub use client::Client;
 
-pub use homescript::exec::*;
+pub use homescript::*;
 pub use homescript::*;
 pub use power::*;
 pub use errors::*;
