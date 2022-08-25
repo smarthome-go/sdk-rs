@@ -11,7 +11,7 @@ use crate::{
 pub struct Client {
     pub client: reqwest::Client,
     pub auth: Auth,
-    pub smarthome_url: url::Url,
+    pub smarthome_url: Url,
     pub smarthome_version: VersionResponse,
 }
 
@@ -19,6 +19,7 @@ impl Client {
     pub async fn new(raw_url: &str, auth: Auth) -> Result<Self> {
         // Parse the source url
         let smarthome_url = Url::parse(raw_url)?;
+
         // Default client with user agent is created
         let client = reqwest::Client::builder()
             .user_agent(HTTP_USER_AGENT)
@@ -57,7 +58,7 @@ impl Client {
     }
 }
 
-async fn validate_credentials(base_url: &url::Url, auth: &Auth) -> Result<()> {
+async fn validate_credentials(base_url: &Url, auth: &Auth) -> Result<()> {
     let mut login_url = base_url.clone();
     // Choose an adequate URL depending on the authentication mode
     login_url.set_path(match auth {
