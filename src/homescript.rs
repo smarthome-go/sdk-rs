@@ -7,20 +7,20 @@ pub mod exec {
     use crate::Client;
 
     #[derive(Serialize)]
-    pub struct ExecHomescriptbyIdRequest {
-        pub id: String,
-        pub args: Vec<HomescriptArg>,
+    pub struct ExecHomescriptbyIdRequest<'request> {
+        pub id: &'request str,
+        pub args: Vec<HomescriptArg<'request>>,
     }
 
     #[derive(Serialize)]
-    pub struct ExecHomescriptCodeRequest {
-        pub code: String,
-        pub args: Vec<HomescriptArg>,
+    pub struct ExecHomescriptCodeRequest<'request> {
+        pub code: &'request str,
+        pub args: Vec<HomescriptArg<'request>>,
     }
 
     #[derive(Serialize)]
-    pub struct HomescriptArg {
-        pub key: String,
+    pub struct HomescriptArg<'request> {
+        pub key: &'request str,
         pub value: String,
     }
 
@@ -71,8 +71,8 @@ pub mod exec {
         /// Executes Homescript code on the target server and returns the response
         pub async fn exec_homescript_code(
             &self,
-            code: String,
-            args: Vec<HomescriptArg>,
+            code: &str,
+            args: Vec<HomescriptArg<'_>>,
             lint: bool,
         ) -> Result<HomescriptExecResponse> {
             let result = self
@@ -98,8 +98,8 @@ pub mod exec {
         /// Executes a Homescript by-id on the target server
         pub async fn exec_homescript(
             &self,
-            id: String,
-            args: Vec<HomescriptArg>,
+            id: &str,
+            args: Vec<HomescriptArg<'_>>,
             lint: bool,
         ) -> Result<HomescriptExecResponse> {
             let result = self
