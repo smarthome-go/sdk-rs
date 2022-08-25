@@ -2,7 +2,7 @@ use reqwest::{Request, Response};
 use serde::Serialize;
 
 use crate::errors::Result;
-use crate::Auth::{QueryPassword, QueryToken};
+use crate::Auth;
 use crate::Client;
 
 impl Client {
@@ -21,19 +21,15 @@ impl Client {
         path: &str,
         body: Option<T>,
     ) -> Result<Request> {
-        // Set the URL to use the desired path
-        let mut url = self.smarthome_url.clone();
-        url.set_path(path);
         // Create a request
-        let mut request = self.client.request(method, url);
+        let mut request = self.client.request(method, self.smarthome_url.join(path)?);
         // Depending on the authentication mode, choose a query-type
-        match &self.auth {
-            crate::Auth::None => (),
-            QueryPassword(user) => {
-                request =
-                    request.query(&[("username", &user.username), ("password", &user.password)])
+        request = match &self.auth {
+            Auth::None => request,
+            Auth::QueryPassword(user) => {
+                request.query(&[("username", &user.username), ("password", &user.password)])
             }
-            QueryToken(token) => request = request.query(&[("token", token)]),
+            Auth::QueryToken(token) => request.query(&[("token", token)]),
         };
         // Append a body if needed
         match body {

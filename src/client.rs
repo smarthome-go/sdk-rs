@@ -1,9 +1,10 @@
-use reqwest::{Method, StatusCode};
+use reqwest::{Method, StatusCode, Url};
 
 use crate::{
     auth::Token,
     errors::{Error, Result},
-    version::{check_version, VersionResponse},
+    version,
+    version::VersionResponse,
     Auth, HTTP_USER_AGENT,
 };
 
@@ -17,7 +18,7 @@ pub struct Client {
 impl Client {
     pub async fn new(raw_url: &str, auth: Auth) -> Result<Self> {
         // Parse the source url
-        let smarthome_url = reqwest::Url::parse(raw_url)?;
+        let smarthome_url = Url::parse(raw_url)?;
         // Default client with user agent is created
         let client = reqwest::Client::builder()
             .user_agent(HTTP_USER_AGENT)
@@ -29,30 +30,29 @@ impl Client {
         let res = reqwest::get(version_url).await?;
 
         // Handle errors which could occur during fetching
-        if res.status() != reqwest::StatusCode::OK {
-            return Err(Error::Smarthome(res.status()));
-        }
-        let version = res.json::<VersionResponse>().await?;
+        let version = match res.status() {
+            StatusCode::OK => res.json::<VersionResponse>().await?,
+            code => return Err(Error::Smarthome(code)),
+        };
 
         // Check if the SDK's version is compatible with the server's version
-        let client = match check_version(&version.version) {
+        let client = match version::is_server_compatible(&version.smarthome_version) {
             Ok(true) => Self {
                 client,
                 auth,
                 smarthome_url,
                 smarthome_version: version,
             },
-            Ok(false) => return Err(Error::IncompatibleVersion(version.version)),
+            Ok(false) => return Err(Error::IncompatibleVersion(version.smarthome_version)),
             Err(err) => return Err(err),
         };
 
         // Attempt to login using the specified credentials
         match &client.auth {
             Auth::None => Ok(client),
-            auth => match validate_credentials(&client.smarthome_url, auth).await {
-                Ok(_) => Ok(client),
-                Err(err) => Err(err),
-            },
+            auth => validate_credentials(&client.smarthome_url, auth)
+                .await
+                .map(|_| client),
         }
     }
 }
