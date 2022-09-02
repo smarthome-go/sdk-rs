@@ -2,10 +2,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
+    /// A URL could not be parsed and thus is invalid
     UrlParse(url::ParseError),
+    /// The actual request failed, mostly due to network erros
     Reqwest(reqwest::Error),
+    /// The Smarthome server responded with an unexpected status code
     Smarthome(reqwest::StatusCode),
+    /// A semantiv version number could not be parsed and thus is invalid
     VersionParse(semver::Error),
+    /// The SDK cannot connect to a Server which is incompatible
     IncompatibleVersion(String),
 }
 

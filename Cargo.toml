@@ -16,3 +16,6 @@ reqwest = { version = "0.11.11", features = [
 semver = "1.0.13"
 serde = { version = "1.0.144", features = ["derive"] }
 url = "2.2.2"
+
+[dev-dependencies]
+tokio = {version ="1.20.1", features=["full"]}

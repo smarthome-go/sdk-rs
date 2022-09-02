@@ -68,6 +68,20 @@ pub struct HomescriptExecErrorLocation {
 
 impl Client {
     /// Executes Homescript code on the target server and returns the response
+    /// ```rust no_run
+    /// use smarthome_sdk_rs::{Client, Auth};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///
+    ///     let res = client.exec_homescript_code(
+    ///             "print('Homescript is cool!')",
+    ///             vec![], /* We dont need arguments for this example */
+    ///             false, /* If set to true, the code would only be linted instead of executed */
+    ///     ).await.unwrap();
+    /// }
+    /// ```
     pub async fn exec_homescript_code(
         &self,
         code: &str,
@@ -94,7 +108,22 @@ impl Client {
         }
     }
 
-    /// Executes a Homescript by-id on the target server
+    /// Executes a Homescript (by its id) on the target server and returns the response
+    /// The Homescript has to already exist on the target server
+    /// ```rust no_run
+    /// use smarthome_sdk_rs::{Client, Auth};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///
+    ///     let res = client.exec_homescript(
+    ///             "test-script",
+    ///             vec![], /* We dont need arguments for this example */
+    ///             false, /* If set to true, the code would only be linted instead of executed */
+    ///     ).await.unwrap();
+    /// }
+    /// ```
     pub async fn exec_homescript(
         &self,
         id: &str,
