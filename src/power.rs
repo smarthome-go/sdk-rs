@@ -66,10 +66,8 @@ impl Client {
     /// #[tokio::main]
     /// async fn main() {
     ///     let client = Client::new("foo", Auth::None).await.unwrap();
-    ///
-    ///     let res = client.power_usage(
-    ///             false, /* Will only fetch data from the last 24 hours */
-    ///     ).await.unwrap();
+    ///     // Will only fetch data from the last 24 hours
+    ///     let res = client.power_usage(false).await.unwrap();
     /// }
     /// ```
     pub async fn power_usage(&self, fetch_all: bool) -> Result<Vec<PowerDrawPoint>> {
