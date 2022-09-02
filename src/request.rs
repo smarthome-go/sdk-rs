@@ -1,4 +1,4 @@
-use reqwest::{Request, Response};
+use reqwest::Request;
 use serde::Serialize;
 
 use crate::errors::Result;
@@ -6,14 +6,6 @@ use crate::Auth;
 use crate::Client;
 
 impl Client {
-    /// Wrapper around the internal `build_request` function
-    pub async fn get(&self, path: &str) -> Result<Response> {
-        Ok(self
-            .client
-            .execute(self.build_request::<()>(reqwest::Method::GET, path, None)?)
-            .await?)
-    }
-
     /// Wrapper around `reqwest` which automatically handles authentication and body attachment
     pub fn build_request<T: Serialize>(
         &self,
