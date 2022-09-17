@@ -1,4 +1,5 @@
 use reqwest::{Method, StatusCode, Url};
+use serde::Deserialize;
 
 use crate::{
     auth::Token,
@@ -7,6 +8,13 @@ use crate::{
     version::VersionResponse,
     Auth, HTTP_USER_AGENT,
 };
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct TokenResponse {
+    username: String,
+    _token_label: String,
+}
 
 /// The client represents an object-oriented approach to interact with the server
 /// Any operation is implemented as a function on this struct
@@ -20,6 +28,7 @@ pub struct Client {
     pub auth: Auth,
     pub smarthome_url: Url,
     pub smarthome_version: VersionResponse,
+    pub username: Option<String>,
 }
 
 impl Client {
@@ -51,28 +60,32 @@ impl Client {
             StatusCode::OK => res.json::<VersionResponse>().await?,
             code => return Err(Error::Smarthome(code)),
         };
-        // Check if the SDK's version constraint is fullfilled by the server
-        let client = match version::is_server_compatible(&version.smarthome_version) {
+        // Check if the SDK's version constraint is fulfilled by the server
+        let mut client = match version::is_server_compatible(&version.smarthome_version) {
             Ok(true) => Self {
                 client,
                 auth,
                 smarthome_url,
                 smarthome_version: version,
+                username: None,
             },
             Ok(false) => return Err(Error::IncompatibleVersion(version.smarthome_version)),
             Err(err) => return Err(err),
         };
         // Attempt to login using the credentials, makes sure that the client is operational
+        // Also obtains the client's username in case token authentication is used
         match &client.auth {
             Auth::None => Ok(client),
-            auth => validate_credentials(&client.smarthome_url, auth)
-                .await
-                .map(|_| client),
+            auth => {
+                client.username = Some(login_with_credentials(&client.smarthome_url, auth).await?);
+                Ok(client)
+            }
         }
     }
 }
 
-async fn validate_credentials(base_url: &Url, auth: &Auth) -> Result<()> {
+/// Validates the client's credentials and returns a username
+async fn login_with_credentials(base_url: &Url, auth: &Auth) -> Result<String> {
     let mut login_url = base_url.clone();
     // Choose an adequate URL depending on the authentication mode
     login_url.set_path(match auth {
@@ -93,7 +106,11 @@ async fn validate_credentials(base_url: &Url, auth: &Auth) -> Result<()> {
     .await?;
     // Handle smarthome-errors which could occur during login
     match res.status() {
-        StatusCode::OK | StatusCode::NO_CONTENT => Ok(()),
+        StatusCode::OK | StatusCode::NO_CONTENT => match auth {
+            Auth::QueryPassword(user) => Ok(user.username.clone()),
+            Auth::QueryToken(_) => Ok(res.json::<TokenResponse>().await?.username),
+            _ => unreachable!("This function may not be called with no authentication mode"),
+        },
         status => Err(Error::Smarthome(status)),
     }
 }
