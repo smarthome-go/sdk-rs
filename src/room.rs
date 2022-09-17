@@ -1,5 +1,6 @@
-use crate::{errors::Result, Client, Error};
-use reqwest::Method;
+use crate::{errors::Result, Auth, Client, Error};
+use bytes::Bytes;
+use reqwest::{Method, StatusCode};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -54,6 +55,29 @@ impl Client {
         match response.status() {
             reqwest::StatusCode::OK => Ok(response.json::<Vec<Room>>().await?),
             status => Err(Error::Smarthome(status)),
+        }
+    }
+
+    pub async fn camera_feed(&self, camera_id: &str) -> Result<Bytes> {
+        // Create a base request
+        let request = self.client.get(
+            self.smarthome_url
+                .join(&format!("/api/camera/feed/{camera_id}"))?,
+        );
+        // Depending on the authentication mode, choose a query-type
+        let response = match &self.auth {
+            Auth::None => request,
+            Auth::QueryPassword(user) => {
+                request.query(&[("username", &user.username), ("password", &user.password)])
+            }
+            Auth::QueryToken(token) => request.query(&[("token", token)]),
+        }
+        .send()
+        .await?;
+        // Check the status code and return the corresponding result
+        match response.status() {
+            StatusCode::OK => Ok(response.bytes().await?),
+            code => Err(Error::Smarthome(code)),
         }
     }
 }
