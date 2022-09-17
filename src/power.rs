@@ -1,4 +1,4 @@
-use reqwest::Method;
+use reqwest::{Method, StatusCode};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::{Error, Result};
@@ -9,6 +9,16 @@ use crate::Client;
 struct PowerRequest<'request> {
     switch: &'request str,
     power_on: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Switch {
+    pub id: String,
+    pub name: String,
+    pub room_id: String,
+    pub power_on: bool,
+    pub watts: u16,
 }
 
 #[derive(Deserialize, Debug)]
@@ -26,6 +36,8 @@ pub struct PowerDrawData {
     pub watts: usize,
     pub percent: f64,
 }
+
+
 
 impl Client {
     /// Sets the power state of the given switch to the given value
@@ -54,6 +66,32 @@ impl Client {
             .await?;
         match response.status() {
             reqwest::StatusCode::OK => Ok(()),
+            status => Err(Error::Smarthome(status)),
+        }
+    }
+
+    /// Returns the personal switches of the current user
+    /// ```rust no_run
+    /// use smarthome_sdk_rs::{Client, Auth};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///
+    ///     let res = client.personal_switches().await.unwrap();
+    /// }
+    /// ```
+    pub async fn personal_switches(&self) -> Result<Vec<Switch>> {
+        let response = self
+            .client
+            .execute(self.build_request::<PowerRequest>(
+                Method::GET,
+                "/api/switch/list/personal",
+                None,
+            )?)
+            .await?;
+        match response.status() {
+            StatusCode::OK => Ok(response.json::<Vec<Switch>>().await?),
             status => Err(Error::Smarthome(status)),
         }
     }
