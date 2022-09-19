@@ -7,7 +7,7 @@ mod request;
 mod version;
 
 // Functionality modules
-mod homescript;
+mod hms;
 mod power;
 mod room;
 
@@ -16,7 +16,7 @@ pub use client::Client;
 
 // Re-exports
 pub use errors::*;
-pub use homescript::*;
+pub use hms::*;
 pub use power::*;
 pub use room::*;
 
