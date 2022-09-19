@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 use crate::{Client, Error, Result};
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct Homescript {
+    pub owner: String,
+    pub data: HomescriptData,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptData {
     pub id: String,
@@ -56,7 +62,7 @@ impl Client {
         }
     }
 
-    /// Delets a Homescript from the target server
+    /// Deletes a Homescript from the target server
     /// ```rust no_run
     /// use smarthome_sdk_rs::{Client, Auth, HomescriptData};
     ///
@@ -78,6 +84,32 @@ impl Client {
             .await?;
         match result.status() {
             reqwest::StatusCode::OK => Ok(()),
+            status => Err(Error::Smarthome(status)),
+        }
+    }
+
+    /// Returns a vec of the user's personal Homescripts
+    /// ```rust no_run
+    /// use smarthome_sdk_rs::{Client, Auth};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///
+    ///     client.list_personal_homescripts().await.unwrap();
+    /// }
+    /// ```
+    pub async fn list_personal_homescripts(&self) -> Result<Vec<Homescript>> {
+        let result = self
+            .client
+            .execute(self.build_request::<Option<()>>(
+                reqwest::Method::GET,
+                "/api/homescript/list/personal",
+                None,
+            )?)
+            .await?;
+        match result.status() {
+            reqwest::StatusCode::OK => Ok(result.json::<Vec<Homescript>>().await?),
             status => Err(Error::Smarthome(status)),
         }
     }
