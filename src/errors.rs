@@ -48,6 +48,7 @@ impl Display for Error {
                         StatusCode::UNAUTHORIZED => "Login failed: invalid credentials\n => Validate your credentials",
                         StatusCode::FORBIDDEN => "Access to this resource has been denied.\n => You are possibly lacking permission to access the requested resource",
                         StatusCode::SERVICE_UNAVAILABLE => "Smarthome is currently unavailable\n => The server has significant issues and was unable to respond properly",
+                        StatusCode::CONFLICT => "The requested action conflicts with other data on the system\n => Identify those conflicts and repeat the current action",
                         _ => "Unimplemented status code: please open an issue on Github here: (https://github.com/smarthome-go/sdk-rs)"
                     }),
                     Error::VersionParse(err) => panic!("Internal error: a version is invalid and could not be parsed: this is a bug and not your fault: {err}"),
