@@ -62,6 +62,32 @@ impl Client {
         }
     }
 
+    /// Modifies a Homescript's data
+    /// ```rust no_run
+    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///
+    ///     client.create_homescript(&HomescriptData {}).await.unwrap();
+    /// }
+    /// ```
+    pub async fn modify_homescript(&self, new_data: &HomescriptData) -> Result<()> {
+        let result = self
+            .client
+            .execute(self.build_request::<&HomescriptData>(
+                reqwest::Method::PUT,
+                "/api/homescript/modify",
+                Some(new_data),
+            )?)
+            .await?;
+        match result.status() {
+            reqwest::StatusCode::OK => Ok(()),
+            status => Err(Error::Smarthome(status)),
+        }
+    }
+
     /// Deletes a Homescript from the target server
     /// ```rust no_run
     /// use smarthome_sdk_rs::{Client, Auth, HomescriptData};
