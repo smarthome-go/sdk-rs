@@ -10,6 +10,7 @@ mod version;
 mod hms;
 mod power;
 mod room;
+mod debug;
 
 pub use auth::{Auth, User};
 pub use client::Client;
@@ -19,6 +20,7 @@ pub use errors::*;
 pub use hms::*;
 pub use power::*;
 pub use room::*;
+pub use debug::*;
 
 /// This specifies the version constraints which are validated on a client's creation
 pub const SERVER_VERSION_REQUIREMENT: &str = "^0.2.0";

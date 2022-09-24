@@ -43,7 +43,7 @@ impl Display for Error {
         let message = match self {
                     Error::UrlParse(err) =>
                         format!("Could not parse URL: {}", err),
-                    Error::Reqwest(err) => format!("Network error: {err}"),
+                    Error::Reqwest(err) => format!("Request error: {err}"),
                     Error::Smarthome(status_code) => format!("Smarthome error ({status_code}):\n{}", match *status_code {
                         StatusCode::UNAUTHORIZED => "Login failed: invalid credentials\n => Validate your credentials",
                         StatusCode::FORBIDDEN => "Access to this resource has been denied.\n => You are possibly lacking permission to access the requested resource",
