@@ -70,7 +70,16 @@ impl Client {
     /// async fn main() {
     ///     let client = Client::new("foo", Auth::None).await.unwrap();
     ///
-    ///     client.create_homescript(&HomescriptData {}).await.unwrap();
+    ///     client.create_homescript(&HomescriptData {
+    ///         id: "".to_string(),
+    ///         name: "".to_string(),
+    ///         description: "".to_string(),
+    ///         code: "".to_string(),
+    ///         md_icon: "".to_string(),
+    ///         workspace: "".to_string(),
+    ///         scheduler_enabled: false,
+    ///         quick_actions_enabled: false,
+    ///     }).await.unwrap();
     /// }
     /// ```
     pub async fn modify_homescript(&self, new_data: &HomescriptData) -> Result<()> {
