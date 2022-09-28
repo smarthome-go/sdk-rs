@@ -1,7 +1,7 @@
 [package]
 name = "smarthome-sdk-rs"
 description = "A Rust client-library which makes communication with the Smarthome server easy"
-version = "0.6.0"
+version = "0.6.1"
 license = "GPL-2.0-only"
 repository = "https://github.com/smarthome-go/sdk-rs"
 edition = "2021"
