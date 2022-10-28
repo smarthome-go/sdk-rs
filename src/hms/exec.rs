@@ -29,17 +29,15 @@ pub struct HomescriptExecResponse {
     pub id: String,
     pub success: bool,
     pub exit_code: isize,
-    pub message: String,
     pub output: String,
-    #[serde(rename = "error")]
     pub errors: Vec<HomescriptExecError>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptExecError {
-    pub error_type: String,
-    pub location: HomescriptExecErrorLocation,
+    pub kind: String,
+    pub span: HomescriptExecErrorSpan,
     pub message: String,
 }
 
@@ -47,11 +45,10 @@ impl Display for HomescriptExecError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} at {}:{}:{}\n  {}",
-            self.error_type,
-            self.location.filename,
-            self.location.line,
-            self.location.column,
+            "{} at {}:{}\n  {}",
+            self.kind,
+            self.span.start.line,
+            self.span.start.column,
             self.message,
         )
     }
@@ -59,8 +56,14 @@ impl Display for HomescriptExecError {
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct HomescriptExecErrorSpan {
+    pub start: HomescriptExecErrorLocation,
+    pub end: HomescriptExecErrorLocation,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct HomescriptExecErrorLocation {
-    pub filename: String,
     pub line: usize,
     pub column: usize,
     pub index: usize,
