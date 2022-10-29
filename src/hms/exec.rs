@@ -20,7 +20,7 @@ pub struct ExecHomescriptCodeRequest<'request> {
 #[derive(Serialize)]
 pub struct HomescriptArg<'request> {
     pub key: &'request str,
-    pub value: String,
+    pub value: &'request str,
 }
 
 #[derive(Deserialize, Debug)]
