@@ -46,9 +46,65 @@ impl Display for HomescriptExecError {
         write!(
             f,
             "{} at {}:{}\n  {}",
+            self.kind, self.span.start.line, self.span.start.column, self.message,
+        )
+    }
+}
+
+impl HomescriptExecError {
+    pub fn display(&self, code: &str, filename: &str) -> String {
+        let lines = code.split("\n").collect::<Vec<&str>>();
+
+        let line1 = if self.span.start.line > 1 {
+            format!(
+                "\n \x1b[90m{: >3} | \x1b[0m{}",
+                self.span.start.line - 1,
+                lines[self.span.start.line - 2]
+            )
+        } else {
+            String::new()
+        };
+        let line2 = format!(
+            " \x1b[90m{: >3} | \x1b[0m{}",
+            self.span.start.line,
+            lines[self.span.start.line - 1]
+        );
+        let line3 = if self.span.start.line < lines.len() {
+            format!(
+                "\n \x1b[90m{: >3} | \x1b[0m{}",
+                self.span.start.line + 1,
+                lines[self.span.start.line]
+            )
+        } else {
+            String::new()
+        };
+
+        let (raw_marker, color) = match self.kind.as_ref() {
+            "Info" => ("~", 6),
+            "Warning" => ("~", 3),
+            _ => ("^", 1),
+        };
+
+        let markers = if self.span.start.line == self.span.end.line {
+            raw_marker.repeat(self.span.end.column - self.span.start.column + 1)
+        } else {
+            raw_marker.to_string()
+        };
+
+        let marker = format!("{}\x1b[1;3{}m{}\x1b[0m", " ".repeat(self.span.start.column + 6), color, markers);
+
+        format!(
+            "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
+            color,
             self.kind,
+            filename,
             self.span.start.line,
             self.span.start.column,
+            line1,
+            line2,
+            marker,
+            line3,
+            color,
             self.message,
         )
     }
