@@ -24,6 +24,7 @@ pub struct DebugInfoData {
     pub hardware_nodes_enabled: u16,
     pub hardware_nodes: Vec<HardwareNode>,
     pub homescript_job_count: u16,
+    pub time: ServerTime,
 }
 
 #[derive(Deserialize, Debug)]
@@ -57,6 +58,14 @@ pub struct HardwareNode {
     pub enabled: bool,
     pub url: String,
     pub token: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ServerTime {
+    pub hours: u8,
+    pub minutes: u8,
+    pub seconds: u8,
+    pub unix: u64,
 }
 
 impl Client {
