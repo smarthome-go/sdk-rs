@@ -53,7 +53,7 @@ impl Display for HomescriptExecError {
 
 impl HomescriptExecError {
     pub fn display(&self, code: &str, filename: &str) -> String {
-        let lines = code.split("\n").collect::<Vec<&str>>();
+        let lines = code.split('\n').collect::<Vec<&str>>();
 
         let line1 = if self.span.start.line > 1 {
             format!(

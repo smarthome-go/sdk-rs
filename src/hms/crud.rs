@@ -16,6 +16,7 @@ pub struct HomescriptData {
     pub description: String,
     pub quick_actions_enabled: bool,
     pub scheduler_enabled: bool,
+    pub is_widged: bool,
     pub code: String,
     pub md_icon: String,
     pub workspace: String,
@@ -44,6 +45,7 @@ impl Client {
     ///         workspace: "".to_string(),
     ///         scheduler_enabled: false,
     ///         quick_actions_enabled: false,
+    ///         is_widged: false,
     ///     }).await.unwrap();
     /// }
     /// ```
@@ -79,6 +81,7 @@ impl Client {
     ///         workspace: "".to_string(),
     ///         scheduler_enabled: false,
     ///         quick_actions_enabled: false,
+    ///         is_widged: false,
     ///     }).await.unwrap();
     /// }
     /// ```
