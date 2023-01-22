@@ -16,7 +16,7 @@ pub struct HomescriptData {
     pub description: String,
     pub quick_actions_enabled: bool,
     pub scheduler_enabled: bool,
-    pub is_widged: bool,
+    pub is_widget: bool,
     pub code: String,
     pub md_icon: String,
     pub workspace: String,
