@@ -140,7 +140,7 @@ impl Client {
     pub async fn list_personal_homescripts(&self) -> Result<Vec<Homescript>> {
         let result = self
             .client
-            .execute(self.build_request::<Option<()>>(
+            .execute(self.build_request::<()>(
                 reqwest::Method::GET,
                 "/api/homescript/list/personal",
                 None,
