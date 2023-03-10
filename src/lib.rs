@@ -11,6 +11,7 @@ mod hms;
 mod power;
 mod room;
 mod debug;
+mod export;
 
 pub use auth::{Auth, User};
 pub use client::Client;
