@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
@@ -30,6 +31,7 @@ pub struct HomescriptExecResponse {
     pub success: bool,
     pub exit_code: isize,
     pub output: String,
+    pub file_contents: HashMap<String, String>,
     pub errors: Vec<HomescriptExecError>,
 }
 
@@ -52,7 +54,7 @@ impl Display for HomescriptExecError {
 }
 
 impl HomescriptExecError {
-    pub fn display(&self, code: &str, filename: &str) -> String {
+    pub fn display(&self, code: &str) -> String {
         let lines = code.split('\n').collect::<Vec<&str>>();
 
         let line1 = if self.span.start.line > 1 {
@@ -97,7 +99,7 @@ impl HomescriptExecError {
             "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
             color,
             self.kind,
-            filename,
+            self.span.filename,
             self.span.start.line,
             self.span.start.column,
             line1,
@@ -115,6 +117,7 @@ impl HomescriptExecError {
 pub struct HomescriptExecErrorSpan {
     pub start: HomescriptExecErrorLocation,
     pub end: HomescriptExecErrorLocation,
+    pub filename: String,
 }
 
 #[derive(Deserialize, Debug)]
