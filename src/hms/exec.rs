@@ -6,16 +6,25 @@ use serde::{Deserialize, Serialize};
 use crate::client::Client;
 use crate::errors::{Error, Result};
 
-#[derive(Serialize)]
-pub struct ExecHomescriptbyIdRequest<'request> {
-    pub id: &'request str,
-    pub args: Vec<HomescriptArg<'request>>,
+pub enum HmsRunMode {
+    Execute { terminate_with_request: bool },
+    Lint,
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExecHomescriptbyIdRequest<'request> {
+    pub id: &'request str,
+    pub args: Vec<HomescriptArg<'request>>,
+    pub terminate_with_request: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExecHomescriptCodeRequest<'request> {
     pub code: &'request str,
     pub args: Vec<HomescriptArg<'request>>,
+    pub terminate_with_request: bool,
 }
 
 #[derive(Serialize)]
@@ -93,7 +102,12 @@ impl HomescriptExecError {
             raw_marker.to_string()
         };
 
-        let marker = format!("{}\x1b[1;3{}m{}\x1b[0m", " ".repeat(self.span.start.column + 6), color, markers);
+        let marker = format!(
+            "{}\x1b[1;3{}m{}\x1b[0m",
+            " ".repeat(self.span.start.column + 6),
+            color,
+            markers
+        );
 
         format!(
             "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
@@ -138,7 +152,7 @@ impl Client {
     ///     let client = Client::new("foo", Auth::None).await.unwrap();
     ///
     ///     let res = client.exec_homescript_code(
-    ///             "print('Homescript is cool!')",
+    ///             "println('Homescript is cool!')",
     ///             vec![], /* We dont need arguments for this example */
     ///             false, /* If set to true, the code would only be linted instead of executed */
     ///     ).await.unwrap();
@@ -148,18 +162,34 @@ impl Client {
         &self,
         code: &str,
         args: Vec<HomescriptArg<'_>>,
-        lint: bool,
+        run_mode: HmsRunMode,
     ) -> Result<HomescriptExecResponse> {
+        let (url, body) = match run_mode {
+            HmsRunMode::Execute {
+                terminate_with_request,
+            } => (
+                "/api/homescript/run/live",
+                ExecHomescriptCodeRequest {
+                    code,
+                    args,
+                    terminate_with_request,
+                },
+            ),
+            HmsRunMode::Lint => (
+                "/api/homescript/lint/live",
+                ExecHomescriptCodeRequest {
+                    code,
+                    args,
+                    terminate_with_request: false,
+                },
+            ),
+        };
         let result = self
             .client
             .execute(self.build_request::<ExecHomescriptCodeRequest>(
                 reqwest::Method::POST,
-                if lint {
-                    "/api/homescript/lint/live"
-                } else {
-                    "/api/homescript/run/live"
-                },
-                Some(ExecHomescriptCodeRequest { code, args }),
+                url,
+                Some(body),
             )?)
             .await?;
         match result.status() {
@@ -190,18 +220,34 @@ impl Client {
         &self,
         id: &str,
         args: Vec<HomescriptArg<'_>>,
-        lint: bool,
+        run_mode: HmsRunMode,
     ) -> Result<HomescriptExecResponse> {
+        let (url, body) = match run_mode {
+            HmsRunMode::Execute {
+                terminate_with_request,
+            } => (
+                "/api/homescript/run/live",
+                ExecHomescriptbyIdRequest {
+                    id,
+                    args,
+                    terminate_with_request,
+                },
+            ),
+            HmsRunMode::Lint => (
+                "/api/homescript/lint/live",
+                ExecHomescriptbyIdRequest {
+                    id,
+                    args,
+                    terminate_with_request: false,
+                },
+            ),
+        };
         let result = self
             .client
             .execute(self.build_request::<ExecHomescriptbyIdRequest>(
                 reqwest::Method::POST,
-                if lint {
-                    "/api/homescript/lint"
-                } else {
-                    "/api/homescript/run"
-                },
-                Some(ExecHomescriptbyIdRequest { id, args }),
+                url,
+                Some(body),
             )?)
             .await?;
         match result.status() {

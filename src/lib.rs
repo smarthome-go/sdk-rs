@@ -22,6 +22,7 @@ pub use hms::*;
 pub use power::*;
 pub use room::*;
 pub use debug::*;
+pub use export::*;
 
 /// This specifies the version constraints which are validated on a client's creation
 pub const SERVER_VERSION_REQUIREMENT: &str = ">=0.4.0";
