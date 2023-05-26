@@ -7,7 +7,7 @@ use crate::client::Client;
 use crate::errors::{Error, Result};
 
 pub enum HmsRunMode {
-    Execute { terminate_with_request: bool },
+    Execute,
     Lint,
 }
 
@@ -16,7 +16,6 @@ pub enum HmsRunMode {
 pub struct ExecHomescriptbyIdRequest<'request> {
     pub id: &'request str,
     pub args: Vec<HomescriptArg<'request>>,
-    pub terminate_with_request: bool,
 }
 
 #[derive(Serialize)]
@@ -24,7 +23,6 @@ pub struct ExecHomescriptbyIdRequest<'request> {
 pub struct ExecHomescriptCodeRequest<'request> {
     pub code: &'request str,
     pub args: Vec<HomescriptArg<'request>>,
-    pub terminate_with_request: bool,
 }
 
 #[derive(Serialize)]
@@ -164,32 +162,16 @@ impl Client {
         args: Vec<HomescriptArg<'_>>,
         run_mode: HmsRunMode,
     ) -> Result<HomescriptExecResponse> {
-        let (url, body) = match run_mode {
-            HmsRunMode::Execute {
-                terminate_with_request,
-            } => (
-                "/api/homescript/run/live",
-                ExecHomescriptCodeRequest {
-                    code,
-                    args,
-                    terminate_with_request,
-                },
-            ),
-            HmsRunMode::Lint => (
-                "/api/homescript/lint/live",
-                ExecHomescriptCodeRequest {
-                    code,
-                    args,
-                    terminate_with_request: false,
-                },
-            ),
+        let url = match run_mode {
+            HmsRunMode::Execute => "/api/homescript/run/live",
+            HmsRunMode::Lint => "/api/homescript/lint/live",
         };
         let result = self
             .client
             .execute(self.build_request::<ExecHomescriptCodeRequest>(
                 reqwest::Method::POST,
                 url,
-                Some(body),
+                Some(ExecHomescriptCodeRequest { code, args }),
             )?)
             .await?;
         match result.status() {
@@ -222,32 +204,16 @@ impl Client {
         args: Vec<HomescriptArg<'_>>,
         run_mode: HmsRunMode,
     ) -> Result<HomescriptExecResponse> {
-        let (url, body) = match run_mode {
-            HmsRunMode::Execute {
-                terminate_with_request,
-            } => (
-                "/api/homescript/run/live",
-                ExecHomescriptbyIdRequest {
-                    id,
-                    args,
-                    terminate_with_request,
-                },
-            ),
-            HmsRunMode::Lint => (
-                "/api/homescript/lint/live",
-                ExecHomescriptbyIdRequest {
-                    id,
-                    args,
-                    terminate_with_request: false,
-                },
-            ),
+        let url = match run_mode {
+            HmsRunMode::Execute => "/api/homescript/run/live",
+            HmsRunMode::Lint => "/api/homescript/lint/live",
         };
         let result = self
             .client
             .execute(self.build_request::<ExecHomescriptbyIdRequest>(
                 reqwest::Method::POST,
                 url,
-                Some(body),
+                Some(ExecHomescriptbyIdRequest { id, args }),
             )?)
             .await?;
         match result.status() {
