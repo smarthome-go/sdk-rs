@@ -34,9 +34,7 @@ pub struct HomescriptArg<'request> {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptExecResponse {
-    pub id: String,
     pub success: bool,
-    pub exit_code: isize,
     pub output: String,
     pub file_contents: HashMap<String, String>,
     pub errors: Vec<HomescriptExecError>,
@@ -45,23 +43,77 @@ pub struct HomescriptExecResponse {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptExecError {
+    pub syntax_error: Option<SyntaxError>,
+    pub diagnostic_error: Option<DiagnosticError>,
+    pub runtime_interrupt: Option<RuntimeInterrupt>,
+    pub span: HomescriptExecErrorSpan,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct SyntaxError {
     pub kind: String,
     pub span: HomescriptExecErrorSpan,
     pub message: String,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DiagnosticError {
+    pub kind: u8,
+    pub message: String,
+    pub notes: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeInterrupt {
+    pub kind: String,
+    pub message: String,
+}
+
 impl Display for HomescriptExecError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} at {}:{}\n  {}",
-            self.kind, self.span.start.line, self.span.start.column, self.message,
-        )
+        if let Some(syntax) = &self.syntax_error {
+            return write!(
+                f,
+                "SyntaxError at {}:{}\n  {}",
+                self.span.start.line, self.span.start.column, syntax.message,
+            );
+        }
+
+        if let Some(diagnostic) = &self.diagnostic_error {
+            let level = match diagnostic.kind {
+                0 => "Hint",
+                1 => "Info",
+                2 => "Warning",
+                3 => "Error",
+                other => unreachable!("Unsupported level {other}"),
+            };
+
+            return write!(
+                f,
+                "{} at {}:{}\n  {}",
+                level, self.span.start.line, self.span.start.column, diagnostic.message,
+            );
+        }
+
+        if let Some(runtime) = &self.runtime_interrupt {
+            return write!(
+                f,
+                "{} at {}:{}\n  {}",
+                runtime.kind, self.span.start.line, self.span.start.column, runtime.message,
+            );
+        }
+
+        unreachable!("The structure of the exec response changed")
     }
 }
 
 impl HomescriptExecError {
     pub fn display(&self, code: &str) -> String {
+        let err = self.diagnostic_error.clone().unwrap();
+
         let lines = code.split('\n').collect::<Vec<&str>>();
 
         let line1 = if self.span.start.line > 1 {
@@ -88,10 +140,12 @@ impl HomescriptExecError {
             String::new()
         };
 
-        let (raw_marker, color) = match self.kind.as_ref() {
-            "Info" => ("~", 6),
-            "Warning" => ("~", 3),
-            _ => ("^", 1),
+        let (kind, raw_marker, color) = match err.kind {
+            0 => ("Hint", "~", 5),
+            1 => ("Info", "~", 6),
+            2 => ("Warning", "~", 3),
+            3 => ("Error", "^", 1),
+            other => unreachable!("A new level {other} was introduced without updating this code"),
         };
 
         let markers = if self.span.start.line == self.span.end.line {
@@ -110,7 +164,7 @@ impl HomescriptExecError {
         format!(
             "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
             color,
-            self.kind,
+            kind,
             self.span.filename,
             self.span.start.line,
             self.span.start.column,
@@ -119,7 +173,7 @@ impl HomescriptExecError {
             marker,
             line3,
             color,
-            self.message,
+            err.message,
         )
     }
 }
