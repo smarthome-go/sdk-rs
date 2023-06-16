@@ -1,6 +1,6 @@
 [package]
 name = "smarthome-sdk-rs"
-version = "0.10.0"
+version = "0.11.0"
 edition = "2021"
 license = "GPL-2.0-only"
 repository = "https://github.com/smarthome-go/sdk-rs"
@@ -12,8 +12,8 @@ description = "A Rust client-library which makes communication with the Smarthom
 bytes = "1.4.0"
 reqwest = { version = "0.11.18", features = ["json", "rustls-tls"], default-features = false }
 semver = "1.0.17"
-serde = { version = "1.0.163", features = ["derive"] }
-url = "2.3.1"
+serde = { version = "1.0.164", features = ["derive"] }
+url = "2.4.0"
 
 [dev-dependencies]
-tokio = { version = "1.28.1", features = ["full"] }
+tokio = { version = "1.28.2", features = ["full"] }
