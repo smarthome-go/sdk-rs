@@ -82,11 +82,7 @@ impl Client {
     pub async fn personal_switches(&self) -> Result<Vec<PowerSwitch>> {
         let response = self
             .client
-            .execute(self.build_request::<()>(
-                Method::GET,
-                "/api/switch/list/personal",
-                None,
-            )?)
+            .execute(self.build_request::<()>(Method::GET, "/api/switch/list/personal", None)?)
             .await?;
         match response.status() {
             StatusCode::OK => Ok(response.json::<Vec<PowerSwitch>>().await?),
@@ -108,11 +104,7 @@ impl Client {
     pub async fn all_switches(&self) -> Result<Vec<PowerSwitch>> {
         let response = self
             .client
-            .execute(self.build_request::<()>(
-                Method::GET,
-                "/api/switch/list/all",
-                None,
-            )?)
+            .execute(self.build_request::<()>(Method::GET, "/api/switch/list/all", None)?)
             .await?;
         match response.status() {
             StatusCode::OK => Ok(response.json::<Vec<PowerSwitch>>().await?),

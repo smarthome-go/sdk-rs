@@ -7,22 +7,22 @@ mod request;
 mod version;
 
 // Functionality modules
+mod debug;
+mod export;
 mod hms;
 mod power;
 mod room;
-mod debug;
-mod export;
 
 pub use auth::{Auth, User};
 pub use client::Client;
 
 // Re-exports
+pub use debug::*;
 pub use errors::*;
+pub use export::*;
 pub use hms::*;
 pub use power::*;
 pub use room::*;
-pub use debug::*;
-pub use export::*;
 
 /// This specifies the version constraints which are validated on a client's creation
 pub const SERVER_VERSION_REQUIREMENT: &str = ">=0.4.0";
