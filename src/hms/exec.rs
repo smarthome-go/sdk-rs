@@ -45,15 +45,13 @@ pub struct HomescriptExecResponse {
 pub struct HomescriptExecError {
     pub syntax_error: Option<SyntaxError>,
     pub diagnostic_error: Option<DiagnosticError>,
-    pub runtime_interrupt: Option<RuntimeInterrupt>,
+    pub runtime_error: Option<RuntimeInterrupt>,
     pub span: HomescriptExecErrorSpan,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SyntaxError {
-    pub kind: String,
-    pub span: HomescriptExecErrorSpan,
     pub message: String,
 }
 
@@ -98,7 +96,7 @@ impl Display for HomescriptExecError {
             );
         }
 
-        if let Some(runtime) = &self.runtime_interrupt {
+        if let Some(runtime) = &self.runtime_error {
             return write!(
                 f,
                 "{} at {}:{}\n  {}",
