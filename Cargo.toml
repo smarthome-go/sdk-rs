@@ -1,6 +1,6 @@
 [package]
 name = "smarthome-sdk-rs"
-version = "0.11.0"
+version = "0.12.0"
 edition = "2021"
 license = "GPL-2.0-only"
 repository = "https://github.com/smarthome-go/sdk-rs"
