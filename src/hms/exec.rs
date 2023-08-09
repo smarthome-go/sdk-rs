@@ -23,6 +23,7 @@ pub struct ExecHomescriptbyIdRequest<'request> {
 pub struct ExecHomescriptCodeRequest<'request> {
     pub code: &'request str,
     pub args: Vec<HomescriptArg<'request>>,
+    pub module_name: &'request str,
 }
 
 #[derive(Serialize)]
@@ -110,56 +111,136 @@ impl Display for HomescriptExecError {
 
 impl HomescriptExecError {
     pub fn display(&self, code: &str) -> String {
-        let err = self.diagnostic_error.clone().unwrap();
+        match (
+            &self.syntax_error,
+            &self.diagnostic_error,
+            &self.runtime_error,
+        ) {
+            (Some(syntax), None, None) => {
+                let lines = code.split('\n').collect::<Vec<&str>>();
 
-        let lines = code.split('\n').collect::<Vec<&str>>();
+                let line1 = if self.span.start.line > 1 {
+                    format!(
+                        "\n \x1b[90m{: >3} | \x1b[0m{}",
+                        self.span.start.line - 1,
+                        lines[self.span.start.line - 2]
+                    )
+                } else {
+                    String::new()
+                };
+                let line2 = format!(
+                    " \x1b[90m{: >3} | \x1b[0m{}",
+                    self.span.start.line,
+                    lines[self.span.start.line - 1]
+                );
+                let line3 = if self.span.start.line < lines.len() {
+                    format!(
+                        "\n \x1b[90m{: >3} | \x1b[0m{}",
+                        self.span.start.line + 1,
+                        lines[self.span.start.line]
+                    )
+                } else {
+                    String::new()
+                };
 
-        let line1 = if self.span.start.line > 1 {
-            format!(
-                "\n \x1b[90m{: >3} | \x1b[0m{}",
-                self.span.start.line - 1,
-                lines[self.span.start.line - 2]
-            )
-        } else {
-            String::new()
-        };
-        let line2 = format!(
-            " \x1b[90m{: >3} | \x1b[0m{}",
+                let markers = if self.span.start.line == self.span.end.line {
+                    "^".repeat(self.span.end.column - self.span.start.column + 1)
+                } else {
+                    "^".to_string()
+                };
+
+                let marker = format!(
+                    "{}\x1b[1;3{}m{}\x1b[0m",
+                    " ".repeat(self.span.start.column + 6),
+                    1,
+                    markers
+                );
+
+                format!(
+            "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
+            1,
+            "Error",
+            self.span.filename,
             self.span.start.line,
-            lines[self.span.start.line - 1]
-        );
-        let line3 = if self.span.start.line < lines.len() {
-            format!(
-                "\n \x1b[90m{: >3} | \x1b[0m{}",
-                self.span.start.line + 1,
-                lines[self.span.start.line]
-            )
-        } else {
-            String::new()
-        };
+            self.span.start.column,
+            line1,
+            line2,
+            marker,
+            line3,
+            1,
+            syntax.message,
+        )
+            }
+            (None, Some(diagnostic), None) => {
+                // take special action if there is no useful span / the source code is empty
+                if self.span.start.line == 0
+                    && self.span.start.column == 0
+                    && self.span.end.line == 0
+                    && self.span.end.column == 0
+                {
+                    let (kind, color) = match diagnostic.kind {
+                        0 => ("Hint", 35),
+                        1 => ("Info", 36),
+                        2 => ("Warning", 33),
+                        3 => ("Error", 31),
+                        _ => unreachable!("Illegal configuration"),
+                    };
+                    return format!(
+                        "\x1b[1;{color}m{kind}\x1b[1;0m\x1b[1;39m in {}\x1b[0m\n{}",
+                        self.span.filename, diagnostic.message,
+                    );
+                }
 
-        let (kind, raw_marker, color) = match err.kind {
-            0 => ("Hint", "~", 5),
-            1 => ("Info", "~", 6),
-            2 => ("Warning", "~", 3),
-            3 => ("Error", "^", 1),
-            other => unreachable!("A new level {other} was introduced without updating this code"),
-        };
+                let lines = code.split('\n').collect::<Vec<&str>>();
 
-        let markers = if self.span.start.line == self.span.end.line {
-            raw_marker.repeat(self.span.end.column - self.span.start.column + 1)
-        } else {
-            raw_marker.to_string()
-        };
+                let line1 = if self.span.start.line > 1 {
+                    format!(
+                        "\n \x1b[90m{: >3} | \x1b[0m{}",
+                        self.span.start.line - 1,
+                        lines[self.span.start.line - 2]
+                    )
+                } else {
+                    String::new()
+                };
+                let line2 = format!(
+                    " \x1b[90m{: >3} | \x1b[0m{}",
+                    self.span.start.line,
+                    lines[self.span.start.line - 1]
+                );
+                let line3 = if self.span.start.line < lines.len() {
+                    format!(
+                        "\n \x1b[90m{: >3} | \x1b[0m{}",
+                        self.span.start.line + 1,
+                        lines[self.span.start.line]
+                    )
+                } else {
+                    String::new()
+                };
 
-        let marker = format!(
-            "{}\x1b[1;3{}m{}\x1b[0m",
-            " ".repeat(self.span.start.column + 6),
-            color,
-            markers
-        );
+                let (kind, raw_marker, color) = match diagnostic.kind {
+                    0 => ("Hint", "~", 5),
+                    1 => ("Info", "~", 6),
+                    2 => ("Warning", "~", 3),
+                    3 => ("Error", "^", 1),
+                    other => unreachable!(
+                        "A new level {other} was introduced without updating this code"
+                    ),
+                };
 
-        format!(
+                let markers = if self.span.start.line == self.span.end.line {
+                    raw_marker.repeat(self.span.end.column - self.span.start.column + 1)
+                } else {
+                    raw_marker.to_string()
+                };
+
+                let marker = format!(
+                    "{}\x1b[1;3{}m{}\x1b[0m",
+                    " ".repeat(self.span.start.column + 6),
+                    color,
+                    markers
+                );
+
+                format!(
             "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
             color,
             kind,
@@ -171,8 +252,77 @@ impl HomescriptExecError {
             marker,
             line3,
             color,
-            err.message,
+            diagnostic.message,
         )
+            }
+            (None, None, Some(runtime)) => {
+                // take special action if there is no useful span / the source code is empty
+                if self.span.start.line == 0
+                    && self.span.start.column == 0
+                    && self.span.end.line == 0
+                    && self.span.end.column == 0
+                {
+                    return format!(
+                        "{}{}\x1b[1;39m in {}\x1b[0m\n{}",
+                        31, runtime.kind, self.span.filename, runtime.message,
+                    );
+                }
+
+                let lines = code.split('\n').collect::<Vec<&str>>();
+
+                let line1 = if self.span.start.line > 1 {
+                    format!(
+                        "\n \x1b[90m{: >3} | \x1b[0m{}",
+                        self.span.start.line - 1,
+                        lines[self.span.start.line - 2]
+                    )
+                } else {
+                    String::new()
+                };
+                let line2 = format!(
+                    " \x1b[90m{: >3} | \x1b[0m{}",
+                    self.span.start.line,
+                    lines[self.span.start.line - 1]
+                );
+                let line3 = if self.span.start.line < lines.len() {
+                    format!(
+                        "\n \x1b[90m{: >3} | \x1b[0m{}",
+                        self.span.start.line + 1,
+                        lines[self.span.start.line]
+                    )
+                } else {
+                    String::new()
+                };
+
+                let markers = if self.span.start.line == self.span.end.line {
+                    "^".repeat(self.span.end.column - self.span.start.column + 1)
+                } else {
+                    "^".to_string()
+                };
+
+                let marker = format!(
+                    "{}\x1b[1;3{}m{}\x1b[0m",
+                    " ".repeat(self.span.start.column + 6),
+                    1,
+                    markers
+                );
+
+                format!(
+            "\x1b[1;3{}mRuntimeError\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
+            1,
+            self.span.filename,
+            self.span.start.line,
+            self.span.start.column,
+            line1,
+            line2,
+            marker,
+            line3,
+            1,
+            runtime.message,
+        )
+            }
+            (_, _, _) => unreachable!("Illegal state"),
+        }
     }
 }
 
@@ -212,6 +362,7 @@ impl Client {
         &self,
         code: &str,
         args: Vec<HomescriptArg<'_>>,
+        module_name: &str,
         run_mode: HmsRunMode,
     ) -> Result<HomescriptExecResponse> {
         let url = match run_mode {
@@ -223,7 +374,7 @@ impl Client {
             .execute(self.build_request::<ExecHomescriptCodeRequest>(
                 reqwest::Method::POST,
                 url,
-                Some(ExecHomescriptCodeRequest { code, args }),
+                Some(ExecHomescriptCodeRequest { code, args, module_name }),
             )?)
             .await?;
         match result.status() {
@@ -257,8 +408,8 @@ impl Client {
         run_mode: HmsRunMode,
     ) -> Result<HomescriptExecResponse> {
         let url = match run_mode {
-            HmsRunMode::Execute => "/api/homescript/run/live",
-            HmsRunMode::Lint => "/api/homescript/lint/live",
+            HmsRunMode::Execute => "/api/homescript/run",
+            HmsRunMode::Lint => "/api/homescript/lint",
         };
         let result = self
             .client
