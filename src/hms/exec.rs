@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 use crate::client::Client;
 use crate::errors::{Error, Result};
 
-pub enum HmsRunMode {
+pub enum HmsRunMode<'request> {
     Execute,
-    Lint,
+    Lint { module_name: &'request str },
 }
 
 #[derive(Serialize)]
@@ -20,10 +20,17 @@ pub struct ExecHomescriptbyIdRequest<'request> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ExecHomescriptCodeRequest<'request> {
+pub struct LintHomescriptCodeRequest<'request> {
     pub code: &'request str,
     pub args: Vec<HomescriptArg<'request>>,
     pub module_name: &'request str,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunHomescriptCodeRequest<'request> {
+    pub code: &'request str,
+    pub args: Vec<HomescriptArg<'request>>,
 }
 
 #[derive(Serialize)]
@@ -362,21 +369,26 @@ impl Client {
         &self,
         code: &str,
         args: Vec<HomescriptArg<'_>>,
-        module_name: &str,
-        run_mode: HmsRunMode,
+        run_mode: HmsRunMode<'_>,
     ) -> Result<HomescriptExecResponse> {
-        let url = match run_mode {
-            HmsRunMode::Execute => "/api/homescript/run/live",
-            HmsRunMode::Lint => "/api/homescript/lint/live",
-        };
-        let result = self
-            .client
-            .execute(self.build_request::<ExecHomescriptCodeRequest>(
+        let req = match run_mode {
+            HmsRunMode::Execute => self.build_request::<RunHomescriptCodeRequest>(
                 reqwest::Method::POST,
-                url,
-                Some(ExecHomescriptCodeRequest { code, args, module_name }),
-            )?)
-            .await?;
+                "/api/homescript/run/live",
+                Some(RunHomescriptCodeRequest { code, args }),
+            )?,
+            HmsRunMode::Lint { module_name } => self.build_request::<LintHomescriptCodeRequest>(
+                reqwest::Method::POST,
+                "/api/homescript/lint/live",
+                Some(LintHomescriptCodeRequest {
+                    code,
+                    args,
+                    module_name,
+                }),
+            )?,
+        };
+
+        let result = self.client.execute(req).await?;
         match result.status() {
             reqwest::StatusCode::OK | reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
                 Ok(result.json::<HomescriptExecResponse>().await?)
@@ -405,11 +417,11 @@ impl Client {
         &self,
         id: &str,
         args: Vec<HomescriptArg<'_>>,
-        run_mode: HmsRunMode,
+        lint: bool,
     ) -> Result<HomescriptExecResponse> {
-        let url = match run_mode {
-            HmsRunMode::Execute => "/api/homescript/run",
-            HmsRunMode::Lint => "/api/homescript/lint",
+        let url = match lint {
+            false => "/api/homescript/run",
+            true => "/api/homescript/lint",
         };
         let result = self
             .client
