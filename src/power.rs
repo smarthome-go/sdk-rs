@@ -2,24 +2,130 @@ use reqwest::{Method, StatusCode};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::{Error, Result};
-use crate::Client;
+use crate::{Client, HomescriptExecError};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct PowerRequest<'request> {
-    switch: &'request str,
-    power_on: bool,
+struct DeviceRequest<'request> {
+    device_id: &'request str,
+    power: Option<DevicePowerRequest>,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PowerSwitch {
+struct DevicePowerRequest {
+    state: bool,
+}
+
+//
+// DEVICE.
+//
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct HydratedDeviceResponse {
+    pub shallow: ShallowDeviceResponse,
+    pub extractions: DeviceExtractions,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceExtractions {
+    pub hms_errors: Vec<HomescriptExecError>,
+    pub config: ConfigSpecWrapper,
+    pub power_information: Option<DevicePowerInformation>,
+    pub dimmables: Option<Vec<DeviceDimmable>>,
+    pub sensors: Option<Vec<DeviceSensor>>,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ConfigSpecWrapper {
+    pub capabilities: Vec<DeviceCapability>,
+    pub info: serde_json::Value,
+}
+
+#[derive(Deserialize, PartialEq, Eq, Clone)]
+#[serde(rename_all = "camelCase")]
+pub enum DeviceCapability {
+    Base,
+    Power,
+    Dimmable,
+    Sensor,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum DeviceType {
+    Input,
+    Output,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ShallowDeviceResponse {
+    #[serde(rename = "type")]
+    pub type_: DeviceType,
     pub id: String,
     pub name: String,
     pub room_id: String,
-    pub power_on: bool,
-    pub watts: u16,
+    pub vendor_id: String,
+    pub model_id: String,
+    pub singleton_json: serde_json::Value,
 }
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DevicePowerInformation {
+    pub state: bool,
+    pub power_draw_watts: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceDimmableRange {
+    lower: f64,
+    // Upper is always exclusive.
+    upper: f64,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DimmableRange {
+    pub lower: f64,
+    pub upper: f64,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceDimmable {
+    pub value: f64,
+    pub label: String,
+    pub range: DimmableRange,
+}
+
+#[derive(Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceSensor {
+    pub label: String,
+    pub value: serde_json::Value,
+    pub hms_type: String,
+    pub unit: String,
+}
+
+// #[derive(Deserialize)]
+// #[serde(rename_all = "camelCase")]
+// pub struct RichDevice {
+//     pub id: String,
+//     pub name: String,
+//     pub room_id: String,
+//     pub power_on: bool,
+//     pub watts: u16,
+// }
+
+//
+// END DEVICE.
+//
 
 #[derive(Deserialize, Debug)]
 pub struct PowerDrawPoint {
@@ -56,10 +162,13 @@ impl Client {
     pub async fn set_power(&self, switch: &str, power_on: bool) -> Result<()> {
         let response = self
             .client
-            .execute(self.build_request::<PowerRequest>(
+            .execute(self.build_request::<DeviceRequest>(
                 Method::POST,
-                "/api/power/set",
-                Some(PowerRequest { switch, power_on }),
+                "/api/devices/action/power",
+                Some(DeviceRequest {
+                    device_id: switch,
+                    power: Some(DevicePowerRequest { state: power_on }),
+                }),
             )?)
             .await?;
         match response.status() {
@@ -79,13 +188,17 @@ impl Client {
     ///     let res = client.personal_switches().await.unwrap();
     /// }
     /// ```
-    pub async fn personal_switches(&self) -> Result<Vec<PowerSwitch>> {
+    pub async fn personal_switches(&self) -> Result<Vec<HydratedDeviceResponse>> {
         let response = self
             .client
-            .execute(self.build_request::<()>(Method::GET, "/api/switch/list/personal", None)?)
+            .execute(self.build_request::<()>(
+                Method::GET,
+                "/api/devices/list/personal/rich",
+                None,
+            )?)
             .await?;
         match response.status() {
-            StatusCode::OK => Ok(response.json::<Vec<PowerSwitch>>().await?),
+            StatusCode::OK => Ok(response.json::<Vec<HydratedDeviceResponse>>().await?),
             status => Err(Error::Smarthome(status)),
         }
     }
@@ -101,13 +214,13 @@ impl Client {
     ///     let res = client.all_switches().await.unwrap();
     /// }
     /// ```
-    pub async fn all_switches(&self) -> Result<Vec<PowerSwitch>> {
+    pub async fn all_switches(&self) -> Result<Vec<HydratedDeviceResponse>> {
         let response = self
             .client
-            .execute(self.build_request::<()>(Method::GET, "/api/switch/list/all", None)?)
+            .execute(self.build_request::<()>(Method::GET, "/api/devices/list/all/rich", None)?)
             .await?;
         match response.status() {
-            StatusCode::OK => Ok(response.json::<Vec<PowerSwitch>>().await?),
+            StatusCode::OK => Ok(response.json::<Vec<HydratedDeviceResponse>>().await?),
             status => Err(Error::Smarthome(status)),
         }
     }

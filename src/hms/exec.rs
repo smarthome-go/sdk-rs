@@ -48,7 +48,7 @@ pub struct HomescriptExecResponse {
     pub errors: Vec<HomescriptExecError>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptExecError {
     pub syntax_error: Option<SyntaxError>,
@@ -57,7 +57,7 @@ pub struct HomescriptExecError {
     pub span: HomescriptExecErrorSpan,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct SyntaxError {
     pub message: String,
@@ -71,7 +71,7 @@ pub struct DiagnosticError {
     pub notes: Vec<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeInterrupt {
     pub kind: String,
@@ -333,7 +333,7 @@ impl HomescriptExecError {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptExecErrorSpan {
     pub start: HomescriptExecErrorLocation,
@@ -341,7 +341,7 @@ pub struct HomescriptExecErrorSpan {
     pub filename: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptExecErrorLocation {
     pub line: usize,

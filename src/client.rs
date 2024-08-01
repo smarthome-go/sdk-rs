@@ -41,10 +41,11 @@ impl Client {
     ///     let client = Client::new(
     ///         "https://smarthome.box",
     ///         Auth::None,
+    ///         true,
     ///     ).await.unwrap();
     /// }
     /// ```
-    pub async fn new(raw_url: &str, auth: Auth) -> Result<Self> {
+    pub async fn new(raw_url: &str, auth: Auth, do_version_check: bool) -> Result<Self> {
         // Parse the source url
         let smarthome_url = Url::parse(raw_url)?;
         // Default reqwest client with a pre-set user agent is created
@@ -60,18 +61,23 @@ impl Client {
             StatusCode::OK => res.json::<VersionResponse>().await?,
             code => return Err(Error::Smarthome(code)),
         };
+
         // Check if the SDK's version constraint is fulfilled by the server
-        let mut client = match version::is_server_compatible(&version.smarthome_version) {
-            Ok(true) => Self {
+        let mut client = match (
+            do_version_check,
+            version::is_server_compatible(&version.smarthome_version),
+        ) {
+            (true, Ok(true)) | (false, Ok(_)) => Self {
                 client,
                 auth,
                 smarthome_url,
                 smarthome_version: version,
                 username: None,
             },
-            Ok(false) => return Err(Error::IncompatibleVersion(version.smarthome_version)),
-            Err(err) => return Err(err),
+            (true, Ok(false)) => return Err(Error::IncompatibleVersion(version.smarthome_version)),
+            (_, Err(err)) => return Err(err),
         };
+
         // Attempt to login using the credentials, makes sure that the client is operational
         // Also obtains the client's username in case token authentication is used
         match &client.auth {
