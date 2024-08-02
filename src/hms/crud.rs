@@ -8,6 +8,13 @@ pub struct Homescript {
     pub data: HomescriptData,
 }
 
+#[derive(Deserialize, Serialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum HomescriptType {
+    Normal,
+    Driver,
+}
+
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct HomescriptData {
@@ -19,6 +26,8 @@ pub struct HomescriptData {
     pub is_widget: bool,
     pub code: String,
     pub md_icon: String,
+    #[serde(rename = "type")]
+    pub type_: HomescriptType,
     pub workspace: String,
 }
 

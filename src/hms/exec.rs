@@ -8,7 +8,10 @@ use crate::errors::{Error, Result};
 
 pub enum HmsRunMode<'request> {
     Execute,
-    Lint { module_name: &'request str },
+    Lint {
+        module_name: &'request str,
+        is_driver: bool,
+    },
 }
 
 #[derive(Serialize)]
@@ -24,6 +27,7 @@ pub struct LintHomescriptCodeRequest<'request> {
     pub code: &'request str,
     pub args: Vec<HomescriptArg<'request>>,
     pub module_name: &'request str,
+    pub is_driver: bool,
 }
 
 #[derive(Serialize)]
@@ -377,13 +381,17 @@ impl Client {
                 "/api/homescript/run/live",
                 Some(RunHomescriptCodeRequest { code, args }),
             )?,
-            HmsRunMode::Lint { module_name } => self.build_request::<LintHomescriptCodeRequest>(
+            HmsRunMode::Lint {
+                module_name,
+                is_driver,
+            } => self.build_request::<LintHomescriptCodeRequest>(
                 reqwest::Method::POST,
                 "/api/homescript/lint/live",
                 Some(LintHomescriptCodeRequest {
                     code,
                     args,
                     module_name,
+                    is_driver,
                 }),
             )?,
         };
