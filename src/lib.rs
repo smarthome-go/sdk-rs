@@ -8,6 +8,7 @@ mod version;
 
 // Functionality modules
 mod debug;
+mod driver;
 mod export;
 mod hms;
 mod power;
@@ -18,6 +19,7 @@ pub use client::Client;
 
 // Re-exports
 pub use debug::*;
+pub use driver::*;
 pub use errors::*;
 pub use export::*;
 pub use hms::*;

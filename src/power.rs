@@ -34,8 +34,16 @@ pub struct DeviceExtractions {
     pub hms_errors: Vec<HomescriptExecError>,
     pub config: ConfigSpecWrapper,
     pub power_information: Option<DevicePowerInformation>,
+    pub color: Option<DeviceColor>,
     pub dimmables: Option<Vec<DeviceDimmable>>,
     pub sensors: Option<Vec<DeviceSensor>>,
+}
+
+#[derive(Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+pub struct DeviceColor {
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
 }
 
 #[derive(Deserialize, Clone)]
@@ -45,16 +53,20 @@ pub struct ConfigSpecWrapper {
     pub info: serde_json::Value,
 }
 
-#[derive(Deserialize, PartialEq, Eq, Clone)]
+#[derive(Deserialize, PartialEq, Eq, Clone, Copy, Debug)]
 #[serde(rename_all = "camelCase")]
 pub enum DeviceCapability {
     Base,
     Power,
     Dimmable,
     Sensor,
+    Color,
+    // Catch-all so that new server-side capabilities do not break deserialization.
+    #[serde(other)]
+    Unknown,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Copy, Debug)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum DeviceType {
     Input,
