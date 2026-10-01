@@ -16,15 +16,15 @@ pub struct ExportRequest {
 impl Client {
     /// Fetches an `export.json` file from the Smarthome server
     /// ```rust no_run
-    /// use smarthome_sdk_rs::{Client, Auth};
+    /// use smarthome_sdk_rs::{Client, Auth, ExportRequest};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new(foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
-    ///     let res = client.export_config(ExportRequest {
-    //          include_profile_pictures: false,
-    //          include_cache_data: false,
+    ///     let res = client.export_config(&ExportRequest {
+    ///         include_profile_pictures: false,
+    ///         include_cache_data: false,
     ///     }).await.unwrap();
     /// }
     /// ```
@@ -39,7 +39,7 @@ impl Client {
             .await?;
         match response.status() {
             StatusCode::OK => Ok(response.text().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 }

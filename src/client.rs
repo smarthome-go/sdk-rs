@@ -59,7 +59,7 @@ impl Client {
         // Handle errors which could occur during fetching
         let version = match res.status() {
             StatusCode::OK => res.json::<VersionResponse>().await?,
-            code => return Err(Error::Smarthome(code)),
+            _ => return Err(Error::from_response(res).await),
         };
 
         // Check if the SDK's version constraint is fulfilled by the server
@@ -117,6 +117,6 @@ async fn login_with_credentials(base_url: &Url, auth: &Auth) -> Result<String> {
             Auth::QueryToken(_) => Ok(res.json::<TokenResponse>().await?.username),
             _ => unreachable!("This function may not be called with no authentication mode"),
         },
-        status => Err(Error::Smarthome(status)),
+        _ => Err(Error::from_response(res).await),
     }
 }

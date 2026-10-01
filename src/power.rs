@@ -163,7 +163,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     let res = client.set_power(
     ///             "test-switch",
@@ -185,7 +185,7 @@ impl Client {
             .await?;
         match response.status() {
             reqwest::StatusCode::OK => Ok(()),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 
@@ -195,7 +195,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     let res = client.personal_switches().await.unwrap();
     /// }
@@ -211,7 +211,7 @@ impl Client {
             .await?;
         match response.status() {
             StatusCode::OK => Ok(response.json::<Vec<HydratedDeviceResponse>>().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 
@@ -221,7 +221,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     let res = client.all_switches().await.unwrap();
     /// }
@@ -233,7 +233,7 @@ impl Client {
             .await?;
         match response.status() {
             StatusCode::OK => Ok(response.json::<Vec<HydratedDeviceResponse>>().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 
@@ -244,7 +244,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///     // Will only fetch data from the last 24 hours
     ///     let res = client.power_usage(false).await.unwrap();
     /// }
@@ -264,7 +264,7 @@ impl Client {
             .await?;
         match response.status() {
             reqwest::StatusCode::OK => Ok(response.json::<Vec<PowerDrawPoint>>().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 }

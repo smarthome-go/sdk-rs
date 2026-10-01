@@ -21,6 +21,12 @@ pub fn is_server_compatible(server_version: &str) -> Result<bool> {
     Ok(req.matches(&version))
 }
 
+impl Client {
+    pub fn smarthome_version(&self) -> &VersionResponse {
+        &self.smarthome_version
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::is_server_compatible;
@@ -30,11 +36,5 @@ mod tests {
         assert!(is_server_compatible("0.15.2-alpha").unwrap());
         assert!(is_server_compatible("0.4.0").unwrap());
         assert!(!is_server_compatible("0.3.9-beta").unwrap());
-    }
-}
-
-impl Client {
-    pub fn smarthome_version(&self) -> &VersionResponse {
-        &self.smarthome_version
     }
 }

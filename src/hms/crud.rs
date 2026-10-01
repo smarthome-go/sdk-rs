@@ -26,7 +26,8 @@ pub struct HomescriptData {
     pub is_widget: bool,
     pub code: String,
     pub md_icon: String,
-    #[serde(rename = "type")]
+    // The server reports the type but rejects it as an unknown field in create / modify requests
+    #[serde(rename = "type", skip_serializing)]
     pub type_: HomescriptType,
     pub workspace: String,
 }
@@ -36,14 +37,20 @@ struct DeleteHomescriptRequest<'request> {
     id: &'request str,
 }
 
+#[derive(Serialize)]
+struct ModifyHomescriptCodeRequest<'request> {
+    id: &'request str,
+    code: &'request str,
+}
+
 impl Client {
     /// Creates a new Homescript on the target server
     /// ```rust no_run
-    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData};
+    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData, HomescriptType};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     client.create_homescript(&HomescriptData {
     ///         id: "".to_string(),
@@ -54,7 +61,8 @@ impl Client {
     ///         workspace: "".to_string(),
     ///         scheduler_enabled: false,
     ///         quick_actions_enabled: false,
-    ///         is_widged: false,
+    ///         is_widget: false,
+    ///         type_: HomescriptType::Normal,
     ///     }).await.unwrap();
     /// }
     /// ```
@@ -69,19 +77,19 @@ impl Client {
             .await?;
         match result.status() {
             reqwest::StatusCode::OK => Ok(()),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(result).await),
         }
     }
 
     /// Modifies a Homescript's data
     /// ```rust no_run
-    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData};
+    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData, HomescriptType};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
-    ///     client.create_homescript(&HomescriptData {
+    ///     client.modify_homescript(&HomescriptData {
     ///         id: "".to_string(),
     ///         name: "".to_string(),
     ///         description: "".to_string(),
@@ -90,7 +98,8 @@ impl Client {
     ///         workspace: "".to_string(),
     ///         scheduler_enabled: false,
     ///         quick_actions_enabled: false,
-    ///         is_widged: false,
+    ///         is_widget: false,
+    ///         type_: HomescriptType::Normal,
     ///     }).await.unwrap();
     /// }
     /// ```
@@ -105,17 +114,44 @@ impl Client {
             .await?;
         match result.status() {
             reqwest::StatusCode::OK => Ok(()),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(result).await),
+        }
+    }
+
+    /// Modifies only the code of a Homescript or driver script.
+    /// Compile errors in the new code are reported via [`Error::SmarthomeResponse`].
+    /// ```rust no_run
+    /// use smarthome_sdk_rs::{Client, Auth};
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
+    ///
+    ///     client.modify_homescript_code("foo-id", "fn main() {}").await.unwrap();
+    /// }
+    /// ```
+    pub async fn modify_homescript_code(&self, id: &str, code: &str) -> Result<()> {
+        let result = self
+            .client
+            .execute(self.build_request(
+                reqwest::Method::PUT,
+                "/api/homescript/modify/code",
+                Some(ModifyHomescriptCodeRequest { id, code }),
+            )?)
+            .await?;
+        match result.status() {
+            reqwest::StatusCode::OK => Ok(()),
+            _ => Err(Error::from_response(result).await),
         }
     }
 
     /// Deletes a Homescript from the target server
     /// ```rust no_run
-    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData};
+    /// use smarthome_sdk_rs::{Client, Auth, HomescriptData, HomescriptType};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     client.delete_homescript("foo-id").await.unwrap();
     /// }
@@ -131,7 +167,7 @@ impl Client {
             .await?;
         match result.status() {
             reqwest::StatusCode::OK => Ok(()),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(result).await),
         }
     }
 
@@ -141,7 +177,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     client.list_personal_homescripts().await.unwrap();
     /// }
@@ -157,7 +193,7 @@ impl Client {
             .await?;
         match result.status() {
             reqwest::StatusCode::OK => Ok(result.json::<Vec<Homescript>>().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(result).await),
         }
     }
 }

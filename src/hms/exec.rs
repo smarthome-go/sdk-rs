@@ -356,16 +356,16 @@ pub struct HomescriptExecErrorLocation {
 impl Client {
     /// Executes Homescript code on the target server and returns the response
     /// ```rust no_run
-    /// use smarthome_sdk_rs::{Client, Auth};
+    /// use smarthome_sdk_rs::{Client, Auth, HmsRunMode};
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     let res = client.exec_homescript_code(
     ///             "println('Homescript is cool!')",
     ///             vec![], /* We dont need arguments for this example */
-    ///             false, /* If set to true, the code would only be linted instead of executed */
+    ///             HmsRunMode::Execute, /* `HmsRunMode::Lint` would only lint the code */
     ///     ).await.unwrap();
     /// }
     /// ```
@@ -401,7 +401,7 @@ impl Client {
             reqwest::StatusCode::OK | reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
                 Ok(result.json::<HomescriptExecResponse>().await?)
             }
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(result).await),
         }
     }
 
@@ -412,7 +412,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     let res = client.exec_homescript(
     ///             "test-script",
@@ -443,7 +443,7 @@ impl Client {
             reqwest::StatusCode::OK | reqwest::StatusCode::INTERNAL_SERVER_ERROR => {
                 Ok(result.json::<HomescriptExecResponse>().await?)
             }
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(result).await),
         }
     }
 }

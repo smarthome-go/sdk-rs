@@ -43,7 +43,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///     let res = client.personal_rooms().await.unwrap();
     /// }
     /// ```
@@ -54,7 +54,7 @@ impl Client {
             .await?;
         match response.status() {
             reqwest::StatusCode::OK => Ok(response.json::<Vec<Room>>().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 
@@ -77,7 +77,7 @@ impl Client {
         // Check the status code and return the corresponding result
         match response.status() {
             StatusCode::OK => Ok(response.bytes().await?),
-            code => Err(Error::Smarthome(code)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 }

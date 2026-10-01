@@ -38,7 +38,7 @@ impl Client {
     ///
     /// #[tokio::main]
     /// async fn main() {
-    ///     let client = Client::new("foo", Auth::None).await.unwrap();
+    ///     let client = Client::new("foo", Auth::None, true).await.unwrap();
     ///
     ///     let res = client.list_drivers().await.unwrap();
     /// }
@@ -54,7 +54,7 @@ impl Client {
             .await?;
         match response.status() {
             StatusCode::OK => Ok(response.json::<Vec<RichDriverResponse>>().await?),
-            status => Err(Error::Smarthome(status)),
+            _ => Err(Error::from_response(response).await),
         }
     }
 }
