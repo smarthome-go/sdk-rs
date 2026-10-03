@@ -168,19 +168,19 @@ impl HomescriptExecError {
                 );
 
                 format!(
-            "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
-            1,
-            "Error",
-            self.span.filename,
-            self.span.start.line,
-            self.span.start.column,
-            line1,
-            line2,
-            marker,
-            line3,
-            1,
-            syntax.message,
-        )
+                    "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
+                    1,
+                    "Error",
+                    self.span.filename,
+                    self.span.start.line,
+                    self.span.start.column,
+                    line1,
+                    line2,
+                    marker,
+                    line3,
+                    1,
+                    syntax.message,
+                )
             }
             (None, Some(diagnostic), None) => {
                 // take special action if there is no useful span / the source code is empty
@@ -252,19 +252,19 @@ impl HomescriptExecError {
                 );
 
                 format!(
-            "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
-            color,
-            kind,
-            self.span.filename,
-            self.span.start.line,
-            self.span.start.column,
-            line1,
-            line2,
-            marker,
-            line3,
-            color,
-            diagnostic.message,
-        )
+                    "\x1b[1;3{}m{}\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
+                    color,
+                    kind,
+                    self.span.filename,
+                    self.span.start.line,
+                    self.span.start.column,
+                    line1,
+                    line2,
+                    marker,
+                    line3,
+                    color,
+                    diagnostic.message,
+                )
             }
             (None, None, Some(runtime)) => {
                 // take special action if there is no useful span / the source code is empty
@@ -319,18 +319,18 @@ impl HomescriptExecError {
                 );
 
                 format!(
-            "\x1b[1;3{}mRuntimeError\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
-            1,
-            self.span.filename,
-            self.span.start.line,
-            self.span.start.column,
-            line1,
-            line2,
-            marker,
-            line3,
-            1,
-            runtime.message,
-        )
+                    "\x1b[1;3{}mRuntimeError\x1b[39m at {}:{}:{}\x1b[0m\n{}\n{}\n{}{}\n\n\x1b[1;3{}m{}\x1b[0m\n",
+                    1,
+                    self.span.filename,
+                    self.span.start.line,
+                    self.span.start.column,
+                    line1,
+                    line2,
+                    marker,
+                    line3,
+                    1,
+                    runtime.message,
+                )
             }
             (_, _, _) => unreachable!("Illegal state"),
         }

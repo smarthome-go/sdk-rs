@@ -84,10 +84,18 @@ impl Error {
 /// A hint on how to resolve status codes whose cause is usually the same
 fn status_hint(status: StatusCode) -> Option<&'static str> {
     match status {
-        StatusCode::UNAUTHORIZED => Some("Login failed: validate your username + password or access token"),
-        StatusCode::FORBIDDEN => Some("You are possibly lacking permission to access the requested resource"),
-        StatusCode::SERVICE_UNAVAILABLE => Some("The server has significant issues and was unable to respond properly"),
-        StatusCode::CONFLICT => Some("The requested action conflicts with other data on the system"),
+        StatusCode::UNAUTHORIZED => {
+            Some("Login failed: validate your username + password or access token")
+        }
+        StatusCode::FORBIDDEN => {
+            Some("You are possibly lacking permission to access the requested resource")
+        }
+        StatusCode::SERVICE_UNAVAILABLE => {
+            Some("The server has significant issues and was unable to respond properly")
+        }
+        StatusCode::CONFLICT => {
+            Some("The requested action conflicts with other data on the system")
+        }
         _ => None,
     }
 }
@@ -183,7 +191,10 @@ mod tests {
             .into();
 
         let message = err.to_string();
-        assert!(message.contains("http://127.0.0.1:1/api/debug"), "{message}");
+        assert!(
+            message.contains("http://127.0.0.1:1/api/debug"),
+            "{message}"
+        );
         assert!(!message.contains("secret-token"), "{message}");
     }
 
@@ -195,6 +206,9 @@ mod tests {
         ))
         .await;
 
-        assert_eq!(err.to_string(), "server responded with 400 Bad Request: bad request");
+        assert_eq!(
+            err.to_string(),
+            "server responded with 400 Bad Request: bad request"
+        );
     }
 }

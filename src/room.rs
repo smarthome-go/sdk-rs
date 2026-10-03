@@ -1,4 +1,4 @@
-use crate::{errors::Result, Auth, Client, Error};
+use crate::{Auth, Client, Error, errors::Result};
 use bytes::Bytes;
 use reqwest::{Method, StatusCode};
 use serde::Deserialize;

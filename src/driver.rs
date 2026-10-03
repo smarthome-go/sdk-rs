@@ -1,8 +1,8 @@
 use reqwest::{Method, StatusCode};
 use serde::Deserialize;
 
-use crate::errors::{Error, Result};
 use crate::Client;
+use crate::errors::{Error, Result};
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]

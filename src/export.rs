@@ -2,8 +2,8 @@ use reqwest::{Method, StatusCode};
 use serde::Serialize;
 
 use crate::{
-    errors::{Error, Result},
     Client,
+    errors::{Error, Result},
 };
 
 #[derive(Serialize)]

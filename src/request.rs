@@ -1,9 +1,9 @@
 use reqwest::Request;
 use serde::Serialize;
 
-use crate::errors::Result;
 use crate::Auth;
 use crate::Client;
+use crate::errors::Result;
 
 impl Client {
     /// Wrapper around `reqwest` which automatically handles authentication and body attachment

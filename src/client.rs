@@ -2,11 +2,11 @@ use reqwest::{Method, StatusCode, Url};
 use serde::Deserialize;
 
 use crate::{
+    Auth, HTTP_USER_AGENT,
     auth::Token,
     errors::{Error, Result},
     version,
     version::VersionResponse,
-    Auth, HTTP_USER_AGENT,
 };
 
 #[derive(Deserialize)]
